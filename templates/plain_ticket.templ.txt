@@ -1,0 +1,17 @@
+Ticket: {{key}}
+Summary: {{summary}}
+Created: {{created}}
+Reporter: {{reporter_id}}
+Assigned: {{assignee_id}}
+
+    {{description | indent(4)}}
+
+-- Comments --
+
+{% for comment in comments %}
+Created: {{comment.created}}
+Author: {{comment.author_id}}
+
+    {{comment.body | indent(4) }}
+{% endfor %}
+

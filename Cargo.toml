@@ -1,0 +1,20 @@
+[package]
+name = "jira_embeddings"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+base64 = "0.13"
+regex = "1.5"
+askama = "0.13.0-pre.0"
+aws-config = { version = "1.1.7", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.80.0"
+tokio-stream = "0.1.17"
+async-trait = "0.1.88"
+
+[build-dependencies]
+askama = "0.12.1"
