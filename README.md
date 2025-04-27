@@ -1,6 +1,5 @@
-# JIRA tickets extractor,deNormalizer and uploader (ETL)
-
-![the logo](./logo.svg)
+# JIRA tickets extractor,deNormalizer and uploader
+<img src="logo.svg" alt="Alt Text" width="300">
 
 ## Usecase 
 
