@@ -101,8 +101,10 @@ fn strip_base64_images(content: &str, ticket_key: &str) -> String {
     //fs::create_dir_all(output_dir)?; TAKEN OUT .. for now
 
     // Regex to find base64 encoded images in the content
+    // FIXME: stream from the content and MAKE THIS BETTER
     let re = Regex::new(r"data:image/([a-zA-Z0-9]+);base64,([A-Za-z0-9+/=]+)").unwrap();
 
+    // FIXME: DONT CLONE that str !!
     let mut result = content.to_string();
     let mut image_counter = 0;
 
