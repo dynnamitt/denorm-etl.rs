@@ -1,4 +1,4 @@
-# JIRA tickets extractor,deNormalizer and uploader
+# JIRA-tickets extract,deNormalize & upload
 <img src="logo.svg" alt="Alt Text" width="300">
 
 ## Usecase 
