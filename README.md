@@ -11,7 +11,7 @@ Outside of scope; generation of embeddings and put/query in VectorDB
 
 ## Dependecies (other than Cargo.toml)
 
-[pandoc](https://pandoc.org/installing.html) see Makefile + layer_pulish.sh 
+[pandoc](https://pandoc.org/installing.html) see Makefile + layer_publish.sh 
 
 TODO: For JIRA a custom rust-lib (using memchr) would be better to avoid cpu/mem overkill in regex/pandoc here.
 
@@ -25,3 +25,5 @@ Make sure to setup an app token in ~/.jira_token then call
     export JIRA_JQL="project=some_code AND resolution=Done"
     # more to come
     cargo run
+
+
