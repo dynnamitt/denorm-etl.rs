@@ -1,24 +1,21 @@
 use async_trait::async_trait;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::sync::mpsc;
 
 use crate::common::ResBoxed;
 use crate::pipeline::consumer::Consumer;
 use crate::pipeline::Item;
 
-// FIXME: Maybe swap trait Item<Inner> to Item<T>
-//use super::jira::TicketFields;
-//use super::jira_cleaned::JiraPlain;
-
 pub struct DataDir {
     dest_dir: PathBuf,
 }
 
 impl DataDir {
-    pub fn new<T: ToString>(dir_name: T) -> Self {
-        DataDir {
-            dest_dir: PathBuf::from(&dir_name.to_string()),
-        }
+    pub async fn new(dir_name: impl AsRef<Path>) -> ResBoxed<Self> {
+        tokio::fs::create_dir_all(&dir_name).await?;
+        Ok(DataDir {
+            dest_dir: PathBuf::from(dir_name.as_ref()),
+        })
     }
 
     //TODO:

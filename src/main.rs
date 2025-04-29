@@ -1,10 +1,9 @@
 mod pipeline;
 mod plugins;
 use tokio::sync::mpsc;
+// mod memchr_test;
 
 use std::env;
-use std::fs;
-use std::path::Path;
 
 use crate::pipeline::consumer::Consumer;
 use crate::pipeline::producer::Producer;
@@ -14,7 +13,9 @@ use crate::plugins::disk_consumer::DataDir;
 use crate::plugins::jira_cleaned::JiraIntoPlain;
 use crate::plugins::jira_producer::JiraInput;
 
+// producer
 const BATCH_SIZE: u32 = 15;
+const OUT_DIR: &str = "_disk_consumer_test";
 
 // Some shared "grunt"
 mod common {
@@ -63,14 +64,11 @@ async fn main() -> common::ResBoxed<()> {
         }
     });
 
-    // Create output directory
-    let output_dir = Path::new("_res_");
-    fs::create_dir_all(output_dir)?;
+    let filestore = DataDir::new(OUT_DIR).await.unwrap();
     let consumer_task = tokio::spawn({
         async move {
             println!("Consumer set to disk");
-            let file_dir = DataDir::new("_res_");
-            match file_dir.pull(rx_upload).await {
+            match filestore.pull(rx_upload).await {
                 Ok(count) => println!("Saved {} documents.", count),
                 Err(e) => eprintln!("Error saving: {}", e),
             }
