@@ -5,7 +5,7 @@
 ARCH=$1
 LIB_VER=$2
 LIB=${3:-pandoc}
-S3_BUCKET=${4:-cmp-lambda-deploy-cache}
+S3_BUCKET=${4:-lambda-deploy-cache}
 ZIP_DIR=${5:-pandoc_cache}
 ZIP_FILE=${ARCH}_${LIB}_${LIB_VER}_layer.zip
 ZIP_FILE_PATH=${ZIP_DIR}/${ZIP_FILE}
