@@ -1,13 +1,14 @@
+/// Mostly a borrow from AWS examples
+/// lots of dead_code to be removed for this use-case (later)
 use aws_sdk_s3::error::ProvideErrorMetadata;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
 use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::{ByteStream, SdkBody};
 use aws_sdk_s3::Client;
 
-#[allow(dead_code)]
 pub async fn upload_object(
     client: &Client,
-    bucket_name: String,
+    bucket_name: &str,
     contents: impl AsRef<[u8]>,
     key: String,
 ) -> Result<PutObjectOutput, S3Error> {
@@ -15,7 +16,7 @@ pub async fn upload_object(
     let body = ByteStream::new(SdkBody::from(contents.as_ref()));
     client
         .put_object()
-        .bucket(bucket_name.to_string())
+        .bucket(bucket_name)
         .key(key.to_string())
         .body(body)
         .send()

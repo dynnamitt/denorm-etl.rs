@@ -52,7 +52,6 @@ impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for DataDir {
     async fn pull(&self, mut rx: mpsc::Receiver<T>) -> ResBoxed<usize> {
         let mut count = 0;
 
-        // Flaskehals
         while let Some(item) = rx.recv().await {
             let key = item.key();
             let content = item.into_inner(); // Assuming `Item` has this method

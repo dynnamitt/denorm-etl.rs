@@ -7,22 +7,19 @@ use async_trait::async_trait;
 use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use tokio::sync::mpsc;
-use tokio::task::JoinSet;
-use tokio_stream::wrappers::ReceiverStream;
-use tokio_stream::StreamExt;
 
-pub struct Bucket {
+pub struct S3Upload {
     name: String,
     prefix: String,
     client: S3Client,
 }
 
-impl Bucket {
+impl S3Upload {
     pub async fn new(name: &str, prefix: &str) -> ResBoxed<Self> {
         let aws_config = aws_config::defaults(BehaviorVersion::latest()).load().await;
         let client = S3Client::new(&aws_config);
 
-        Ok(Bucket {
+        Ok(S3Upload {
             name: name.to_string(),
             client,
             prefix: prefix.to_string(),
@@ -31,42 +28,16 @@ impl Bucket {
 }
 
 #[async_trait]
-impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for Bucket {
-    async fn pull(&self, rx: mpsc::Receiver<T>) -> ResBoxed<usize> {
-        let rx_stream = ReceiverStream::new(rx);
-
-        // Process up to 10 uploads concurrently
-        let mut s3_stream = rx_stream
-            .map(|itm| async move {
-                let client = self.client.clone();
-                let bucket_name = self.name.clone();
-                let prefix = self.prefix.clone();
-                let itm_key = itm.key();
-                let contents = itm.into_inner();
-                let key = format!("{}/{}.txt", prefix, &itm_key);
-                let put_res = s3::upload_object(&client, bucket_name, contents, key).await;
-                match put_res {
-                    Ok(_) => {
-                        println!("s3: Successfully uploaded {}", itm_key);
-                        Ok(())
-                    }
-                    Err(e) => {
-                        eprintln!("s3: Failed to upload {}: {}", itm_key, e);
-                        Err(e)
-                    }
-                }
-            })
-            .collect::<Vec<_>>() // Need to collect to actually run the map eagerly
-            .await;
-
-        let mut join_set = JoinSet::new();
-
-        while let Some(fut) = s3_stream.next().await {
-            join_set.spawn(fut);
-        }
-        // Await all the spawned tasks
+impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for S3Upload {
+    async fn pull(&self, mut rx: mpsc::Receiver<T>) -> ResBoxed<usize> {
         let mut count = 0;
-        while let Some(put_res) = join_set.join_next().await {
+
+        while let Some(item) = rx.recv().await {
+            let itm_key = item.key();
+            let content = item.into_inner(); // Assuming `Item` has this method
+            let obj_key = format!("{}{}", self.prefix, itm_key);
+            let _put = s3::upload_object(&self.client, &self.name, content, obj_key).await;
+
             count += 1;
         }
         Ok(count)

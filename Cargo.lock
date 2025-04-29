@@ -861,6 +861,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "denorm-etl"
+version = "0.1.0"
+dependencies = [
+ "askama 0.12.1",
+ "askama 0.13.1",
+ "async-trait",
+ "aws-config",
+ "aws-sdk-s3",
+ "base64 0.13.1",
+ "memchr",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "der"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1553,25 +1572,6 @@ name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
-
-[[package]]
-name = "jira_embeddings"
-version = "0.1.0"
-dependencies = [
- "askama 0.12.1",
- "askama 0.13.1",
- "async-trait",
- "aws-config",
- "aws-sdk-s3",
- "base64 0.13.1",
- "memchr",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
-]
 
 [[package]]
 name = "jobserver"

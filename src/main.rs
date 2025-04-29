@@ -5,13 +5,14 @@ use tokio::sync::mpsc;
 
 use std::env;
 
-use crate::pipeline::consumer::Consumer;
-use crate::pipeline::producer::Producer;
-use crate::pipeline::transformer::Transformer;
+use pipeline::consumer::Consumer;
+use pipeline::producer::Producer;
+use pipeline::transformer::Transformer;
 
-use crate::plugins::disk_consumer::DataDir;
-use crate::plugins::jira_cleaned::JiraIntoPlain;
-use crate::plugins::jira_producer::JiraInput;
+//use crate::plugins::disk_consumer::DataDir;
+use plugins::jira_cleaned::JiraIntoPlain;
+use plugins::jira_producer::JiraInput;
+use plugins::s3_consumer::S3Upload;
 
 // producer
 const BATCH_SIZE: u32 = 15;
@@ -33,7 +34,7 @@ async fn main() -> common::ResBoxed<()> {
     let token = env::var("JIRA_TOKEN").expect("env JIRA_TOKEN");
     let _bucket = env::var("JIRA_DEST_S3");
 
-    // TODO: Make(file) a factory solution for this part
+    // TODO: Make(tm) a factory solution for this part
 
     // Create channels
     let (tx_fetch, rx_transform) = mpsc::channel(100);
@@ -64,12 +65,24 @@ async fn main() -> common::ResBoxed<()> {
         }
     });
 
+    /* DEBUG consumer
     let filestore = DataDir::new(OUT_DIR).await.unwrap();
     let consumer_task = tokio::spawn({
         async move {
             println!("Consumer set to disk");
             match filestore.pull(rx_upload).await {
                 Ok(count) => println!("Saved {} documents.", count),
+                Err(e) => eprintln!("Error saving: {}", e),
+            }
+        }
+    });*/
+
+    let s3_upload = S3Upload::new(common::BUCKET_NAME, "some-jql/").await?;
+    let consumer_task = tokio::spawn({
+        async move {
+            println!("Consumer set to s3-upload");
+            match s3_upload.pull(rx_upload).await {
+                Ok(count) => println!("Saved {} objects.", count),
                 Err(e) => eprintln!("Error saving: {}", e),
             }
         }
