@@ -17,6 +17,6 @@ Make sure to setup an app token in ~/.jira_token then call
 
     export JIRA_TOKEN=$(cat ~/.jira_token);
     export JIRA_ENDPOINT="https://jira.mydomain.no";
-    export JIRA_JQL="project=CMPT AND resolution=Done"
+    export JIRA_JQL="project=some_code AND resolution=Done"
     # more to come
     cargo run
