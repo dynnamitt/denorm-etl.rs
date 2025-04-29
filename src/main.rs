@@ -21,7 +21,7 @@ const OUT_DIR: &str = "_disk_consumer_test";
 // Some shared "grunt"
 mod common {
     use std::error::Error;
-    pub const PRODUCER_WAIT: u64 = 150;
+    pub const PRODUCER_WAIT: u64 = 1500; // TODO: tune down when deNorm is MORE efficient
     pub const BUCKET_NAME: &str = "jira-cleaned-for-inference";
     pub type ResBoxed<T> = Result<T, Box<dyn Error + Sync + Send>>;
 }
@@ -77,7 +77,7 @@ async fn main() -> common::ResBoxed<()> {
         }
     });*/
 
-    let s3_upload = S3Upload::new(common::BUCKET_NAME, "some-jql/").await?;
+    let s3_upload = S3Upload::new(common::BUCKET_NAME, "some-jql-2/", ".txt").await?;
     let consumer_task = tokio::spawn({
         async move {
             println!("Consumer set to s3-upload");

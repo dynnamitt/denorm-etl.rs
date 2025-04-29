@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tokio::sync::mpsc;
 
@@ -6,8 +7,11 @@ use crate::common::ResBoxed;
 use crate::pipeline::consumer::Consumer;
 use crate::pipeline::Item;
 
+#[derive(Debug)]
 pub struct DataDir {
     dest_dir: PathBuf,
+    // TODO: suffix
+    // TODO: impl Display?
 }
 
 impl DataDir {
@@ -20,12 +24,10 @@ impl DataDir {
 
     //TODO:
     // write asysnc
-    async fn write_file(&self, prefix: impl ToString, data: impl AsRef<[u8]>) -> ResBoxed<()> {
-        let output_file = self
-            .dest_dir
-            .join(format!("{}_plain.txt", prefix.to_string()));
+    async fn write_file(&self, prefix: &str, data: impl AsRef<[u8]>) -> ResBoxed<()> {
+        let suffix = "_plain.txt";
+        let output_file = self.dest_dir.join(format!("{}{}", prefix, suffix));
         tokio::fs::write(&output_file, data).await?;
-        println!("Plain text saved to {}", output_file.display());
         Ok(())
     }
 }
@@ -55,7 +57,15 @@ impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for DataDir {
         while let Some(item) = rx.recv().await {
             let key = item.key();
             let content = item.into_inner(); // Assuming `Item` has this method
-            self.write_file(key, content).await?;
+            match self.write_file(&key, content).await {
+                Ok(_) => {
+                    count += 1;
+                    println!("Plain text saved to {:?}/{}", self, key);
+                }
+                Err(err) => {
+                    eprintln!("Disk-save Fail: {}", err);
+                }
+            };
             count += 1;
         }
 

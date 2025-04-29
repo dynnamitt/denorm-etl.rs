@@ -26,9 +26,10 @@ pub trait Producer<T: Item>: InputEndpoint<T> {
                     // ERROR-handling
                     Ok(inp_items) => {
                         for itm in inp_items {
-                            println!("Pushing item.. {}", itm.key());
+                            let key = itm.key();
+                            println!("Produced item.. {}", key);
                             if (tx.send(itm).await).is_err() {
-                                eprintln!("Pipeline puller dropped a msg in batch {}", idx);
+                                eprintln!("Pipeline dropped {} in batch {}", key, idx);
                                 break;
                             }
                         }

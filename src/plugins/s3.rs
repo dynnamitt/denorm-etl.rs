@@ -10,7 +10,7 @@ pub async fn upload_object(
     client: &Client,
     bucket_name: &str,
     contents: impl AsRef<[u8]>,
-    key: String,
+    key: &str,
 ) -> Result<PutObjectOutput, S3Error> {
     // let body = ByteStream::from_path(Path::new(file_name)).await;
     let body = ByteStream::new(SdkBody::from(contents.as_ref()));
@@ -177,7 +177,6 @@ impl S3Error {
         S3Error(format!("{}: {}", message.into(), self.0))
     }
 }
-// TODO: Make this generic code more generic
 impl<T: ProvideErrorMetadata> From<T> for S3Error {
     fn from(value: T) -> Self {
         S3Error(format!(
