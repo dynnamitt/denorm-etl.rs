@@ -1,5 +1,6 @@
 use askama::Template;
 use async_trait::async_trait;
+use std::time::Instant;
 use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 
@@ -39,8 +40,11 @@ where
             let fields = item.into_inner();
 
             // TODO: pool proc maybe?
+            let start = Instant::now();
             let plain_version = prep_and_render(fields, key.clone()).await?;
 
+            let duration = start.elapsed();
+            println!("Transformer for {} took {:?}", key, duration);
             let push_msg = JiraPlain(key, plain_version);
 
             // send the result; exit if the receiver has been dropped

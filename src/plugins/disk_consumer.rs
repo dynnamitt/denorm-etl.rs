@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tokio::sync::mpsc;
 
@@ -15,6 +14,7 @@ pub struct DataDir {
 }
 
 impl DataDir {
+    #[allow(dead_code)]
     pub async fn new(dir_name: impl AsRef<Path>) -> ResBoxed<Self> {
         tokio::fs::create_dir_all(&dir_name).await?;
         Ok(DataDir {
@@ -31,23 +31,6 @@ impl DataDir {
         Ok(())
     }
 }
-
-// #[async_trait]
-// // skip Transformer (test) version
-// impl<T: Item<Inner = TicketFields> + Send + 'static> Consumer<T> for DataDir {
-//     async fn pull(&self, mut rx: mpsc::Receiver<T>) -> ResBoxed<usize> {
-//         let mut count = 0;
-//
-//         while let Some(item) = rx.recv().await {
-//             let key = item.key();
-//             let fields = item.into_inner(); // Assuming `Item` has this method
-//             self.write_file(key, fields.summary).await?;
-//             count += 1;
-//         }
-//
-//         Ok(count)
-//     }
-// }
 
 #[async_trait]
 impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for DataDir {

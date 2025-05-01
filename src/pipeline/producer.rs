@@ -21,13 +21,13 @@ pub trait Producer<T: Item>: InputEndpoint<T> {
             println!("Producer batch range: {:#?}", r);
             for idx in r {
                 let start = (idx - 1) * batch_size;
-                println!("Pushing batch {}", idx);
+                println!("Ready batch #{}", idx);
                 match self.query(start, batch_size).await {
                     // ERROR-handling
                     Ok(inp_items) => {
                         for itm in inp_items {
                             let key = itm.key();
-                            println!("Produced item.. {}", key);
+                            println!("Producer passing item.. {}", key);
                             if (tx.send(itm).await).is_err() {
                                 eprintln!("Pipeline dropped {} in batch {}", key, idx);
                                 break;
