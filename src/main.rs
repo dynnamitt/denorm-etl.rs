@@ -1,3 +1,4 @@
+//mod memchr_test;
 mod pipeline;
 mod pipeline_factory;
 mod plugins;

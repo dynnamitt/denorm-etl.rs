@@ -1,11 +1,13 @@
-use std::env;
+use std::env::{self, JoinPathsError};
 use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
 
-use crate::pipeline::consumer::Consumer;
+use crate::pipeline::consumer::{self, Consumer};
 use crate::pipeline::producer::Producer;
 use crate::pipeline::transformer::Transformer;
 
 //use crate::plugins::disk_consumer::DataDir;
+use crate::plugins::disk_consumer::DataDir;
 use crate::plugins::jira_cleaned::JiraIntoPlain;
 use crate::plugins::jira_producer::JiraInput;
 use crate::plugins::s3_consumer::S3Upload;
@@ -37,7 +39,7 @@ pub async fn create() -> ResBoxed<()> {
 
     // DE_NORM
     // FIXME: use memchr , not regex
-    // FIXME: use SAXHan, not pandoc
+    // FIXME: use SAXHandler, not pandoc
     let transf_task = tokio::spawn({
         async move {
             // Search for tickets using JQL
@@ -49,29 +51,35 @@ pub async fn create() -> ResBoxed<()> {
         }
     });
 
-    /* DEBUG consumer
-    let filestore = DataDir::new(OUT_DIR).await.unwrap();
-    let consumer_task = tokio::spawn({
-        async move {
-            println!("Consumer set to disk");
-            match filestore.pull(rx_upload).await {
-                Ok(count) => println!("Saved {} documents.", count),
-                Err(e) => eprintln!("Error saving: {}", e),
-            }
-        }
-    });*/
+    let debug = env::var("DEBUG_CONSUMER")
+        .unwrap_or("true".into())
+        .to_lowercase();
 
-    let bucket = env::var("JIRA_DEST_S3").unwrap_or("jira-cleaned-for-inference".into());
-    let s3_upload = S3Upload::new(&bucket, "some-jql-2/", ".txt").await?;
-    let consumer_task = tokio::spawn({
-        async move {
-            println!("Consumer set to s3-upload");
-            match s3_upload.pull(rx_upload).await {
-                Ok(count) => println!("Saved {} objects.", count),
-                Err(e) => eprintln!("Error saving: {}", e),
+    let consumer_task = if debug == "true" {
+        // DEBUG consumer
+        let filestore = DataDir::new(OUT_DIR).await.unwrap();
+        tokio::spawn({
+            async move {
+                println!("Consumer set to disk");
+                match filestore.pull(rx_upload).await {
+                    Ok(count) => println!("Saved {} documents.", count),
+                    Err(e) => eprintln!("Error saving: {}", e),
+                }
             }
-        }
-    });
+        })
+    } else {
+        let bucket = env::var("JIRA_DEST_S3").unwrap_or("jira-cleaned-for-inference".into());
+        let s3_upload = S3Upload::new(&bucket, "some-jql-2/", ".txt").await?;
+        tokio::spawn({
+            async move {
+                println!("Consumer set to s3-upload");
+                match s3_upload.pull(rx_upload).await {
+                    Ok(count) => println!("Uploaded {} objects.", count),
+                    Err(e) => eprintln!("Error saving: {}", e),
+                }
+            }
+        })
+    };
 
     // Wait for all tasks to complete
     let _ = tokio::join!(producer_task, transf_task, consumer_task);

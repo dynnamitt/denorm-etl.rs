@@ -64,7 +64,7 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
     for c in fields.comment.comments {
         let key = key.clone();
         comment_tasks.spawn(async move {
-            let cleaned_body = cleanup(&c.body, &key).await;
+            let cleaned_body = transform_with_proc(c.body.clone()).await;
             SimplerComment {
                 body: cleaned_body.unwrap_or(c.body),
                 author_id: c.author.name,
@@ -79,7 +79,7 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
     }
 
     // Process description
-    let clean_descr = cleanup(&fields.description, &key).await;
+    let clean_descr = transform_with_proc(fields.description.clone()).await;
 
     let t = SimplerJiraTicket {
         key: key.clone(),
@@ -94,13 +94,8 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
     t.render().map_err(|e| e.into())
 }
 
-// TODO: fn too small?
-pub async fn cleanup(content: &str, ticket_key: &str) -> ResBoxed<String> {
-    let imgfree = strip_base64_images(content, ticket_key);
-    // quick fixxr IF ""BADDOC""
-    transform_with_proc(imgfree).await
-}
-
+#[allow(dead_code)]
+// TODO: remove
 fn strip_base64_images(content: &str, ticket_key: &str) -> String {
     // Create output directory if it doesn't exist
     //fs::create_dir_all(output_dir)?; TAKEN OUT .. for now
@@ -135,7 +130,7 @@ fn strip_base64_images(content: &str, ticket_key: &str) -> String {
         result = result.replace(&cap[0], &image_reference);
     }
 
-    result
+    content.to_string()
 }
 #[derive(Template)]
 #[template(path = "plain_ticket.templ.txt")]

@@ -5,3 +5,4 @@ target/
 _res_
 _disk_consumer_test
 ref_run_*
+_disk_consumer_debug

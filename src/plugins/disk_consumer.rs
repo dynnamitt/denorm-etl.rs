@@ -6,6 +6,8 @@ use crate::common::ResBoxed;
 use crate::pipeline::consumer::Consumer;
 use crate::pipeline::Item;
 
+const INDENT: &str = " 💾";
+
 #[derive(Debug)]
 pub struct DataDir {
     dest_dir: PathBuf,
@@ -43,7 +45,7 @@ impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for DataDir {
             match self.write_file(&key, content).await {
                 Ok(_) => {
                     count += 1;
-                    println!("Plain text saved to {:?}/{}", self, key);
+                    println!("{} Plain text saved to {:?}/{}", INDENT, self, key);
                 }
                 Err(err) => {
                     eprintln!("Disk-save Fail: {}", err);
