@@ -22,6 +22,7 @@ impl Item for JiraPlain {
         self.1
     }
 }
+const INDENT: &str = " ⌛";
 
 pub struct JiraIntoPlain {}
 
@@ -44,7 +45,7 @@ where
             let plain_version = prep_and_render(fields, key.clone()).await?;
 
             let duration = start.elapsed();
-            println!("Transformer for {} took {:?}", key, duration);
+            println!("{} Transformer for {} took {:?}", INDENT, key, duration);
             let push_msg = JiraPlain(key, plain_version);
 
             // send the result; exit if the receiver has been dropped

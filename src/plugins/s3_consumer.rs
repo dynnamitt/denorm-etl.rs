@@ -8,6 +8,8 @@ use aws_config::BehaviorVersion;
 use aws_sdk_s3::Client as S3Client;
 use tokio::sync::mpsc;
 
+const INDENT: &str = " ☁";
+
 pub struct S3Upload {
     name: String,
     prefix: String,
@@ -41,7 +43,7 @@ impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for S3Upload {
             match s3::upload_object(&self.client, &self.name, content, &obj_key).await {
                 Ok(_) => {
                     count += 1;
-                    println!("Uploaded s3://{}/{}", &self.name, obj_key);
+                    println!("{} Uploaded s3://{}/{}", INDENT, &self.name, obj_key);
                 }
                 Err(err) => {
                     eprintln!("S3 Fail: {}", err);

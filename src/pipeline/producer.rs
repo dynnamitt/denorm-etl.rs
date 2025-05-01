@@ -9,6 +9,9 @@ pub trait InputEndpoint<T> {
 }
 
 use crate::pipeline::Item;
+
+const INDENT: &str = " 📨";
+
 pub trait Producer<T: Item>: InputEndpoint<T> {
     // implement via SuperTrait
     async fn push(&self, batch_size: u32, tx: mpsc::Sender<T>) -> ResBoxed<usize> {
@@ -27,7 +30,7 @@ pub trait Producer<T: Item>: InputEndpoint<T> {
                     Ok(inp_items) => {
                         for itm in inp_items {
                             let key = itm.key();
-                            println!("Producer passing item.. {}", key);
+                            println!("{} Producer passing item.. {}", INDENT, key);
                             if (tx.send(itm).await).is_err() {
                                 eprintln!("Pipeline dropped {} in batch {}", key, idx);
                                 break;

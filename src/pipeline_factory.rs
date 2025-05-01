@@ -41,7 +41,6 @@ pub async fn create() -> ResBoxed<()> {
     let transf_task = tokio::spawn({
         async move {
             // Search for tickets using JQL
-            println!("Test-tranform setup: ");
             let transf = JiraIntoPlain {};
             match transf.transform(rx_transform, tx_transform).await {
                 Ok(_) => println!("Transformer done"),
