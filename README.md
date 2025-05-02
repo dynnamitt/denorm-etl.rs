@@ -5,7 +5,8 @@
 
 ## Usecase 
 
-Making plaintext versions for ML inference jobs inside AWS Lambda.
+Making plaintext versions before ML inference jobs inside AWS Lambda.
+Can be a [During ingestion Lambda](https://docs.aws.amazon.com/bedrock/latest/userguide/kb-data-source-customize-ingestion.html#kb-data-source-customize-lambda) once the handler-code is in place.
 
 Outside of scope; generation of embeddings and put/query in VectorDB 
 
