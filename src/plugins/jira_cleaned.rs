@@ -9,7 +9,6 @@ use crate::pipeline::transformer::Transformer;
 use crate::pipeline::Item;
 use crate::plugins::jira::TicketFields;
 use crate::plugins::text_proc::transform_with_proc;
-use regex::Regex;
 
 pub struct JiraPlain(String, String);
 
@@ -57,16 +56,18 @@ where
     }
 }
 
+// TODO: make this into a lib that spawns its own REQUIRED number of channels
 pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<String> {
     // Process comments concurrently with Tokio-native concurrency
     let mut comment_tasks = JoinSet::new();
     // Spawn all comment processing tasks
     for c in fields.comment.comments {
-        let key = key.clone();
         comment_tasks.spawn(async move {
-            let cleaned_body = transform_with_proc(c.body.clone()).await;
+            // let cleaned_body = transform_with_proc(c.body.clone()).await;
+            let cleaned_body = c.body;
             SimplerComment {
-                body: cleaned_body.unwrap_or(c.body),
+                // body: cleaned_body.unwrap_or(c.body),
+                body: cleaned_body,
                 author_id: c.author.name,
                 created: c.created,
             }
@@ -79,7 +80,8 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
     }
 
     // Process description
-    let clean_descr = transform_with_proc(fields.description.clone()).await;
+    //let clean_descr = transform_with_proc(fields.description.clone()).await;
+    let clean_descr = fields.description; // debug
 
     let t = SimplerJiraTicket {
         key: key.clone(),
@@ -87,51 +89,14 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
         assignee_id: fields.assignee.name,
         reporter_id: fields.reporter.name,
         created: fields.created,
-        description: clean_descr.unwrap_or(fields.description),
+        //description: clean_descr.unwrap_or(fields.description),
+        description: clean_descr,
         comments: cs,
     };
 
     t.render().map_err(|e| e.into())
 }
 
-#[allow(dead_code)]
-// TODO: remove
-fn strip_base64_images(content: &str, ticket_key: &str) -> String {
-    // Create output directory if it doesn't exist
-    //fs::create_dir_all(output_dir)?; TAKEN OUT .. for now
-
-    // Regex to find base64 encoded images in the content
-    // FIXME: stream from the content and MAKE THIS BETTER
-    let re = Regex::new(r"data:image/([a-zA-Z0-9]+);base64,([A-Za-z0-9+/=]+)").unwrap();
-
-    // FIXME: DONT CLONE that str !!
-    let mut result = content.to_string();
-    let mut image_counter = 0;
-
-    for cap in re.captures_iter(content) {
-        let img_type = &cap[1];
-        let _base64_data = &cap[2]; // skip scan/trace for now !!!!
-
-        // Decode base64 data
-        //let image_data = decode(base64_data)?;
-
-        // Create a file for the image
-        image_counter += 1;
-        let file_name = format!("{}_{}.{}", ticket_key, image_counter, img_type);
-        //let file_path = output_dir.join(&file_name);
-
-        // Write image data to file
-        //let mut file = fs::File::create(&file_path)?;
-        //file.write_all(&image_data)?;
-
-        // Replace the base64 data with a link to the image file
-        let image_reference = format!("!{}!", file_name);
-        println!("  Took out an image: {}", file_name);
-        result = result.replace(&cap[0], &image_reference);
-    }
-
-    content.to_string()
-}
 #[derive(Template)]
 #[template(path = "plain_ticket.templ.txt")]
 struct SimplerJiraTicket {

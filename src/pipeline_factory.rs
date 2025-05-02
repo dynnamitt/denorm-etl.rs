@@ -1,8 +1,7 @@
-use std::env::{self, JoinPathsError};
+use std::env;
 use tokio::sync::mpsc;
-use tokio::task::JoinHandle;
 
-use crate::pipeline::consumer::{self, Consumer};
+use crate::pipeline::consumer::Consumer;
 use crate::pipeline::producer::Producer;
 use crate::pipeline::transformer::Transformer;
 

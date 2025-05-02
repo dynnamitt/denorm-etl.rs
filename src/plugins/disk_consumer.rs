@@ -51,7 +51,6 @@ impl<T: Item<Inner = String> + Send + 'static> Consumer<T> for DataDir {
                     eprintln!("Disk-save Fail: {}", err);
                 }
             };
-            count += 1;
         }
 
         Ok(count)
