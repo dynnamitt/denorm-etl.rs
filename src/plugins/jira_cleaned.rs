@@ -45,7 +45,7 @@ where
             let plain_version = prep_and_render(fields, key.clone()).await?;
 
             let duration = start.elapsed();
-            println!("{} Transformer for {} took {:?}", INDENT, key, duration);
+            println!("{} Transform for {} took {:?}", INDENT, key, duration);
             let push_msg = JiraPlain(key, plain_version);
 
             // send the result; exit if the receiver has been dropped
@@ -62,7 +62,6 @@ pub async fn prep_and_render(fields: TicketFields, key: String) -> ResBoxed<Stri
     let mut comment_tasks = JoinSet::new();
     // Spawn all comment processing tasks
     for c in fields.comment.comments {
-        let key = key.clone();
         comment_tasks.spawn(async move {
             let cleaned_body = transform_with_proc(c.body.clone()).await;
             SimplerComment {
