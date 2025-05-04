@@ -9,7 +9,7 @@ const PROC_UTIL: &str = "pandoc";
 const PROC_ARGS: [&str; 4] = ["-f", "jira", "-t", "plain"];
 
 // Helper function to run pandoc transformation
-pub async fn transform_with_proc(content: String) -> ResBoxed<String> {
+pub async fn transform(content: String) -> ResBoxed<String> {
     // Spawn a tokio task for the synchronous process
     let result = spawn_blocking(move || {
         // Use pandoc to convert markdown to plain text
