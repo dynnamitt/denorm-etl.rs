@@ -1,11 +1,9 @@
-use std::env;
 use tokio::sync::mpsc;
 
 use crate::pipeline::consumer::Consumer;
 use crate::pipeline::producer::Producer;
 use crate::pipeline::transformer::Transformer;
 
-//use crate::plugins::disk_consumer::DataDir;
 use crate::plugins::disk_consumer::DataDir;
 use crate::plugins::jira_cleaned::JiraIntoPlain;
 use crate::plugins::jira_producer::JiraInput;
@@ -21,14 +19,16 @@ pub async fn create() -> ResBoxed<()> {
 
     // Spawn the tasks
 
-    // -- Jira configuration
-    let base_url = env::var("JIRA_ENDPOINT").expect("env JIRA_ENDPOINT");
-    let jql = env::var("JIRA_JQL").expect("env JIRA_JQL");
-    let token = env::var("JIRA_TOKEN").expect("env JIRA_TOKEN");
-
     let producer_task = tokio::spawn({
         async move {
-            // Search for tickets using JQL
+            let base_url = get_conf("JIRA_ENDPOINT");
+            let jql = get_conf("JIRA_JQL");
+            let token = get_conf("JIRA_TOKEN");
+
+            if base_url.is_empty() || jql.is_empty() || token.is_empty() {
+                eprintln!("!! Required JIRA-request ENVS not set. !!");
+                panic!();
+            }
             println!("Producing ticket(s) with JQL: {}", jql);
             let jira_inp = JiraInput::new(base_url, token, jql);
             match jira_inp.push(batch_size as u32, tx_fetch).await {

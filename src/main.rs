@@ -1,6 +1,5 @@
-//mod memchr_test;
+mod factory;
 mod pipeline;
-mod pipeline_factory;
 mod plugins;
 
 // Some shared "grunt"
@@ -31,5 +30,5 @@ use common::*;
 
 #[tokio::main]
 async fn main() -> ResBoxed<()> {
-    pipeline_factory::create().await
+    factory::create().await
 }
