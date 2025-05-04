@@ -24,7 +24,14 @@ impl Item for JiraPlain {
 }
 const INDENT: &str = " ⌛";
 
-pub struct JiraIntoPlain {}
+pub struct JiraIntoPlain {
+    skip_pandoc: bool, //debug
+}
+impl JiraIntoPlain {
+    pub fn new(skip_pandoc: bool) -> Self {
+        Self { skip_pandoc }
+    }
+}
 
 #[async_trait]
 impl<I> Transformer<I, JiraPlain> for JiraIntoPlain

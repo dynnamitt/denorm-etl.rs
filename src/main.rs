@@ -5,13 +5,26 @@ mod plugins;
 
 // Some shared "grunt"
 mod common {
+    use phf::phf_map;
+    use std::env;
     use std::error::Error;
-    pub const PRODUCER_BATCH_SIZE: usize = 15;
-    pub const PRODUCER_WAIT: u64 = 1500; // TODO: tune down when deNorm is MORE efficient
     pub type ResBoxed<T> = Result<T, Box<dyn Error + Sync + Send>>;
+    static ENV_DEFS: phf::Map<&'static str, &'static str> = phf_map! {
+        "JIRA_ENDPOINT" => "",
+        "JIRA_JQL" => "",
+        "JIRA_TOKEN" => "",
+        "SKIP_PANDOC" => "false",
+        "DEBUG_DIR" => "",
+        "DEST_BUCKET" => "jira-cleaned-for-inference",
+        "DEST_PREFIX" => "",
+        "PRODUCER_WAIT" => "1000",
+        "PRODUCER_BATCH_SIZE" => "15"
+    };
 
-    #[allow(dead_code)]
-    pub const OUT_DIR: &str = "_disk_consumer_debug";
+    pub fn get_conf(x: &str) -> String {
+        assert!(ENV_DEFS.contains_key(x)); // code err
+        env::var(x).unwrap_or(ENV_DEFS.get(x).unwrap().to_string())
+    }
 }
 
 use common::*;

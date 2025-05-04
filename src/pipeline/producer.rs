@@ -1,4 +1,4 @@
-use crate::common::{self, *};
+use crate::common::*;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::sleep;
@@ -15,6 +15,9 @@ const INDENT: &str = " 📨";
 pub trait Producer<T: Item>: InputEndpoint<T> {
     // implement via SuperTrait
     async fn push(&self, batch_size: u32, tx: mpsc::Sender<T>) -> ResBoxed<usize> {
+        let wait = get_conf("PRODUCER_WAIT")
+            .parse::<u64>()
+            .expect("PRODUCER_WAIT env is not a valid num");
         let total = self.count().await?;
         if total == 0 {
             Err("No data to process".to_string().into())
@@ -43,7 +46,7 @@ pub trait Producer<T: Item>: InputEndpoint<T> {
                         continue;
                     }
                 }
-                sleep(Duration::from_millis(common::PRODUCER_WAIT)).await;
+                sleep(Duration::from_millis(wait)).await;
             }
             Ok(total as usize)
         }

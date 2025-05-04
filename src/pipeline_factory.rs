@@ -15,8 +15,9 @@ use super::common::*;
 
 pub async fn create() -> ResBoxed<()> {
     // Create channels
-    let (tx_fetch, rx_transform) = mpsc::channel(PRODUCER_BATCH_SIZE);
-    let (tx_transform, rx_upload) = mpsc::channel(PRODUCER_BATCH_SIZE);
+    let batch_size = get_conf("PRODUCER_BATCH_SIZE").parse::<usize>().unwrap();
+    let (tx_fetch, rx_transform) = mpsc::channel(batch_size * 2);
+    let (tx_transform, rx_upload) = mpsc::channel(batch_size * 2);
 
     // Spawn the tasks
 
@@ -24,12 +25,13 @@ pub async fn create() -> ResBoxed<()> {
     let base_url = env::var("JIRA_ENDPOINT").expect("env JIRA_ENDPOINT");
     let jql = env::var("JIRA_JQL").expect("env JIRA_JQL");
     let token = env::var("JIRA_TOKEN").expect("env JIRA_TOKEN");
+
     let producer_task = tokio::spawn({
         async move {
             // Search for tickets using JQL
             println!("Producing ticket(s) with JQL: {}", jql);
             let jira_inp = JiraInput::new(base_url, token, jql);
-            match jira_inp.push(PRODUCER_BATCH_SIZE as u32, tx_fetch).await {
+            match jira_inp.push(batch_size as u32, tx_fetch).await {
                 Ok(count) => println!("Fetched {} JIRA tickets", count),
                 Err(e) => eprintln!("Error fetching JIRA issues: {}", e),
             }
@@ -37,12 +39,14 @@ pub async fn create() -> ResBoxed<()> {
     });
 
     // DE_NORM
-    // FIXME: use memchr , not regex
-    // FIXME: use SAXHandler, not pandoc
+    let skip_pandoc: bool = get_conf("SKIP_PANDOC")
+        .to_lowercase()
+        .parse()
+        .unwrap_or_default();
     let transf_task = tokio::spawn({
         async move {
             // Search for tickets using JQL
-            let transf = JiraIntoPlain {};
+            let transf = JiraIntoPlain::new(skip_pandoc);
             match transf.transform(rx_transform, tx_transform).await {
                 Ok(_) => println!("Transformer done"),
                 Err(e) => eprintln!("Transformer issues: {}", e),
@@ -50,13 +54,11 @@ pub async fn create() -> ResBoxed<()> {
         }
     });
 
-    let debug = env::var("DEBUG_CONSUMER")
-        .unwrap_or("true".into())
-        .to_lowercase();
+    let outdir = get_conf("DEBUG_DIR");
 
-    let consumer_task = if debug == "true" {
+    let consumer_task = if !outdir.is_empty() {
         // DEBUG consumer
-        let filestore = DataDir::new(OUT_DIR).await.unwrap();
+        let filestore = DataDir::new(outdir).await.unwrap();
         tokio::spawn({
             async move {
                 println!("Consumer set to disk");
@@ -67,8 +69,9 @@ pub async fn create() -> ResBoxed<()> {
             }
         })
     } else {
-        let bucket = env::var("JIRA_DEST_S3").unwrap_or("jira-cleaned-for-inference".into());
-        let s3_upload = S3Upload::new(&bucket, "some-jql-2/", ".txt").await?;
+        let bucket = get_conf("DEST_BUCKET");
+        let prefix = get_conf("DEST_PREFIX"); // TODO slugify(JQL) when empty
+        let s3_upload = S3Upload::new(&bucket, &prefix, ".txt").await?;
         tokio::spawn({
             async move {
                 println!("Consumer set to s3-upload");
