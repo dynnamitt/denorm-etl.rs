@@ -49,7 +49,7 @@ impl JiraIntoPlain {
             if skip {
                 Ok(s)
             } else {
-                transform(s).await
+                transform(&s).await
             }
         };
         for c in fields.comment.comments {
