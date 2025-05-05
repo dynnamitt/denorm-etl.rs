@@ -24,11 +24,38 @@ mod common {
         assert!(ENV_DEFS.contains_key(x)); // code err
         env::var(x).unwrap_or(ENV_DEFS.get(x).unwrap().to_string())
     }
+    pub mod core_helper {
+        use nix::sched::sched_setaffinity;
+        use nix::sched::CpuSet;
+        use nix::unistd::{sysconf, Pid, SysconfVar};
+
+        pub fn get_num_cpus() -> usize {
+            match sysconf(SysconfVar::_NPROCESSORS_ONLN) {
+                Ok(Some(n)) => n as usize,
+                _ => 1, // fallback
+            }
+        }
+
+        pub fn set_affinity(pid: i32) -> nix::Result<()> {
+            let target_cores = if get_num_cpus() >= 4 {
+                vec![2] // pin to cores 1 and 2
+            } else {
+                vec![0] // fallback to core 0
+            };
+            let mut cpuset = CpuSet::new();
+            for &core in &target_cores {
+                cpuset.set(core)?;
+            }
+            sched_setaffinity(Pid::from_raw(pid), &cpuset)
+        }
+    }
 }
 
 use common::*;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> ResBoxed<()> {
+    let cpus = common::core_helper::get_num_cpus(); // debug
+    println!("UNIX OS/SYS cpus:{}", cpus);
     factory::create().await
 }

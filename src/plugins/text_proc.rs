@@ -1,9 +1,9 @@
-use std::io::Write;
+use super::super::common::core_helper::set_affinity;
+use super::super::common::*;
+
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
-
-use super::super::common::*;
 
 // TODO: pass in via envs (main)
 const PROC_UTIL: &str = "pandoc";
@@ -20,6 +20,13 @@ pub async fn transform(content: &str) -> ResBoxed<String> {
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("Failed to spawn {}: {}", PROC_UTIL, e))?;
+
+    // if let Some(pid) = child.id() {
+    //     match set_affinity(pid as i32) {
+    //         Ok(_) => println!("Pinned process {} to cores", pid),
+    //         Err(e) => eprintln!("Failed to set CPU affinity: {:?}", e),
+    //     }
+    // }
 
     // Write content to stdin
     if let Some(mut stdin) = child.stdin.take() {
